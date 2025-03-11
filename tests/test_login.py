@@ -1,6 +1,3 @@
-from pages.customer_login_page import CustomerLoginPage
-
-
 def test_incorrect_login(customer_login_page):
     customer_login_page.open_page()
     customer_login_page.fill_login_form('notexistingemail@gmail.com', 'totvac@gmail.com')
