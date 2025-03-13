@@ -1,5 +1,5 @@
  name: Python autotests
-
+ 
  on:
   workflow_dispatch:
     inputs:
@@ -13,7 +13,7 @@
           - regression
           - extended
           - all
-
+          
  jobs:
    run-tests:
      runs-on: ubuntu-latest
