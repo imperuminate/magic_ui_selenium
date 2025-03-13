@@ -20,8 +20,40 @@ permissions:
   id-token: write
           
 jobs:
+  download-history:
+    runs-on: ubuntu-latest
+    name: Download history
+    steps:
+      - name: setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: >
+          ARTIFACT_ID=$(curl -L 
+          -H "Accept: application/vnd.github+json" 
+          -H "X-GitHub-Api-Version: 2022-11-28" 
+          "https://api.github.com/repos/imperuminate/magic_ui_selenium/actions/artifacts?name=allure-results" 
+          | python -c "import sys, json; print(json.load(sys.stdin)['artifacts'][0]['id']);") 
+          &&
+          curl -L 
+          -H "Accept: application/vnd.github+json" 
+          -H "Authorization: Bearer ${{ secrets.TOKEN }}" 
+          -H "X-GitHub-Api-Version: 2022-11-28" 
+          https://api.github.com/repos/imperuminate/magic_ui_selenium/actions/artifacts/$ARTIFACT_ID/zip 
+          -o artifacts.zip
+      - run: mkdir allure-results && unzip artifacts.zip -d allure-results
+      - name: Store allure history
+        uses: actions/upload-artifact@v3
+        with:
+          name: allure-results
+          path:
+            allure-results
+          retention-days: 1
+        
+    
   run-tests:
     runs-on: ubuntu-latest
+    needs: download-history
     name: Run autotests
     steps:
       - name: Checkout autotests
@@ -32,6 +64,8 @@ jobs:
           python-version: '3.13' #???
       - name: Install dependencies
         run: pip install -r requirements.txt
+      - name: Download all workflow run artifacts
+        uses: actions/download-artifact@v4
       - name: run all tests
         if: "github.event.inputs.deployment_target == 'all'"
         run: pytest --alluredir=allure-results
